@@ -1,0 +1,7 @@
+[pve01]
+192.168.83.10
+
+[pve01:vars]
+ansible_user=root
+ansible_ssh_extra_args='-o StrictHostKeyChecking=no'
+ansible_python_interpreter=auto_legacy
