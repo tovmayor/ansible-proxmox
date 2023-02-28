@@ -10,41 +10,38 @@
     api_host_name: pve01.domain.com
     api_user_name: root@pam
     node_name: pve01
-    vm_template: ubuntu2004-cloud
-    templ_id: 900
+    vm_template: oracle-linux-8u7-cloud
+    templ_id: 204
 #   new VM's common parameters
     storage_name: local
     net_value: 'virtio,bridge=vmbr1'
     gw_value: 192.168.82.1
     nameservers: 192.168.82.2 192.168.82.3
     domain: domain.com
-    ssh_pub: 'ssh-rsa ....'
+    ssh_pub: 'ssh-rsa ...'
 #   new VM's unique parameters
     vms:
       vm1:
-        vm_new_id: 101
-        vm_new_name: test-1      # VM name must DO NOT contain '_'
+        vm_new_id: 138
+        vm_new_name: test-1      # VM name must DO NOT contain "_"
         sock: 1
-        core: 2
-        mem: 2048
-        disk_size: 6G
-        ip_value: 192.168.82.11
-
-      vm2:
-        vm_new_id: 102
-        vm_new_name: test-2      # VM name must DO NOT contain '_'
-        sock: 2
         core: 4
-        mem: 4096
-        disk_size: 10G
-        ip_value: 192.168.82.12
-
+        mem: 8192
+        disk_size: 40G           
+        ip_value: 192.168.82.62
+      vm2:
+        vm_new_id: 139
+        vm_new_name: test-2      # VM name must DO NOT contain "_"
+        sock: 1
+        core: 4
+        mem: 8192
+        disk_size: 40G
+        ip_value: 192.168.82.63
   vars_prompt:
     - name: api_pass
       prompt: Enter password to PVE {{ api_user_name }} account
 
   tasks:
-
   - name: create a full clone of the templ with id {{ templ_id }}
     community.general.proxmox_kvm:
       api_host: "{{ api_host_name }}"
@@ -59,7 +56,8 @@
       name: "{{ item.value.vm_new_name }}"
       storage: "{{ storage_name }}"
       format: raw
-    loop: "{{ lookup('dict', vms) }}"  
+      timeout: 300
+    loop: "{{ lookup('dict', vms, wantlist=True) }}"  
 
   - name: update VM's cpu/memory 
     community.general.proxmox_kvm:
@@ -73,15 +71,15 @@
       sockets: "{{ item.value.sock }}"
       cores: "{{ item.value.core }}"
       memory: "{{ item.value.mem }}"
-    loop: "{{ lookup('dict', vms) }}"
+    loop: "{{ lookup('dict', vms, wantlist=True) }}"
 
   - name: setting disk size 
     shell: qm resize {{ item.value.vm_new_id  }} scsi0 {{ item.value.disk_size }}
-    loop: "{{ lookup('dict', vms) }}"  
+    loop: "{{ lookup('dict', vms, wantlist=True) }}"  
 
   - name: setting network with addr {{ ip_value }}/24
     shell: qm set {{ item.value.vm_new_id }} -net0 {{ net_value }} -ipconfig0 'gw={{ gw_value }},ip={{ item.value.ip_value }}/24' -nameserver '{{ nameservers }}' -searchdomain {{ domain }}
-    loop: "{{ lookup('dict', vms) }}"
+    loop: "{{ lookup('dict', vms, wantlist=True) }}"
 
   - name: add cloudinit user and ssh pub key to VM
     community.general.proxmox_kvm:
@@ -95,10 +93,11 @@
 #      do not use cipassword, use ssh keys instead
 #      cipassword: supersecret  
       sshkeys: "{{ ssh_pub }}"      
-    loop: "{{ lookup('dict', vms) }}"
+    loop: "{{ lookup('dict', vms, wantlist=True) }}"
 
   - name: starting VM
     community.general.proxmox_kvm:
+
       api_host: "{{ api_host_name }}"
       api_user: "{{ api_user_name }}"
       api_password: "{{ api_pass }}"
@@ -106,5 +105,5 @@
 
       vmid: "{{ item.value.vm_new_id }}"
       state: started
-    loop: "{{ lookup('dict', vms) }}"
+    loop: "{{ lookup('dict', vms, wantlist=True) }}"
 
