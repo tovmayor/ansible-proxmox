@@ -3,7 +3,7 @@
 TMPL_NAME="oracle-linux-8u7-cloud"
 #IMG_NAME="ubuntu-20.04-server-cloudimg-amd64.img"
 IMG_NAME="OL8U7_x86_64-kvm-b148.qcow"
-STORAGE_NAME=SSD
+STORAGE_NAME=local
 MEM=8192
 CORES=4
 NETWORK="virtio,bridge=vmbr1"
