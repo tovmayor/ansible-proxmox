@@ -38,6 +38,4 @@ qm set $id --serial0 socket --vga serial0
 qm set $id --agent enabled=1
 qm template $id
 
-
-
 qm list| grep $id
